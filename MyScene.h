@@ -3,6 +3,8 @@
 #define __MY_SCENE_H__
 #include"cocos2d.h"
 #include"Box2D\Box2D.h"
+#include "ui/CocosGUI.h"     //ui头文件
+using namespace cocos2d::ui; //ui命名空间
 USING_NS_CC;
 class MyWorld:public cocos2d::Layer
 {
@@ -19,9 +21,12 @@ public:
 	bool onContactBegin(PhysicsContact& contact);  //碰撞检测
 	void makeBricks() ;        //生成砖块 
 	void updateChapter();      //更新关卡
+	void addScoreLine();
 	void makeSingleBrick(float& PositionX,float& PositionY,int brickType);    //生产单个砖块
 	Sprite* setBrickType(int brickType);             //创建不同类型的砖块精灵
 	CREATE_FUNC(MyWorld);      //使用了一个宏
+	~MyWorld() {};
+
 
 private:
 	b2Vec2* world;             //世界
@@ -32,17 +37,14 @@ private:
 	Size ScreenSize;           //屏幕尺寸
 	PhysicsWorld* m_world;
 	PhysicsBody* ballBody;     //球的刚体
-	int totalScore = 0;        //总得分
+	TextAtlas* scoreText;
 	float originalVelocity = 50.0f;//小球初始速度
 	float boardLength = 0.4f;  //板的长度
-	int gameLevel = 2;         //游戏关卡
+	int totalScore = 0;        //总得分
+	int gameLevel = 1;         //游戏关卡
 	int amountOfBrick=20;      //砖块数量
 	int scoreTag = 0;          //得分道具标志
-	enum Tag{BALL,BOARD,BRICK,FLOOR,SCORE_PROP,BOARD_PROP};
-
-protected:
-
-
+	enum Tag{BALL,BOARD,BRICK,FLOOR,SCORE_PROP,BOARD_PROP,HARD_BRICK};
 };
 #endif //__MY_SCENE_H__
 
