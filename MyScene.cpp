@@ -1,23 +1,34 @@
 #include "MyScene.h"
 #include"GameOver.h"
 #include "ui/CocosGUI.h"     //ui头文件
-using namespace cocos2d::ui; //ui命名空间
+#include"Next.h"
 #include<cmath>
-#define pi 3.14159
-
+#define pi 3.14
+using namespace cocos2d::ui; //ui命名空间
 USING_NS_CC;
 
-int getChapter()
+/*获取关卡
+levelTag为true则关卡加一
+levelTag为false则关卡回到第一关*/
+int getChapter(bool levelTag)
 {
-	static int GameLevel = 1;
-	GameLevel++;
+	static int GameLevel = 0;
+	if (levelTag == true)
+		GameLevel++;
+	else
+		GameLevel=0;
 	return GameLevel;
 }
-int getTotalScore(int tag)
+
+/*获取总得分*/
+int getTotalScore(int tag,bool tag2)
 {
 	static int score=0;
 	score += 1 + tag;
-	
+	if (true == tag2)
+	{
+		score = 0;
+	}
 	return score;
 }
 
@@ -38,36 +49,39 @@ bool MyWorld::init()
 	}
 	ScreenSize = Director::getInstance()->getVisibleSize();
 	//ScreenSize.width /= 2;
-	/*设置边界*/
-	auto edgeBody = PhysicsBody::createEdgeBox(ScreenSize, PhysicsMaterial(100.0f,1.0f,1.0f),0.1f);     //三参数代表矩形边界的大小、材质(密度、恢复系数、摩擦力)、边框宽度
-	auto edgeNode = Node::create();
-	edgeNode->setPosition(Point(ScreenSize.width / 2, ScreenSize.height / 2));
-	edgeNode->setPhysicsBody(edgeBody);
-	addChild(edgeNode);
 
-	gameLevel = getChapter();
+	gameLevel = getChapter(true);
 	MyWorld::updateChapter();
 	MyWorld::addSprite();
 	MyWorld::addListener();
-	MyWorld::test();
-	MyWorld::makeBricks();
 	MyWorld::addScoreLine();
+	MyWorld::makeBricks();
 
-	Node::schedule(CC_SCHEDULE_SELECTOR(MyWorld::update), 0.01f, kRepeatForever, 0.1f);
+	Node::schedule(CC_SCHEDULE_SELECTOR(MyWorld::update), 0.02f, kRepeatForever, 0.1f);
 
 	return true;
 }
 
+/*Member Initialization List*/
+
+/*添加背景、地板、移动板及小球精灵*/
 void MyWorld::addSprite()
 {
+	/*设置边界*/
+	auto edgeBody = PhysicsBody::createEdgeBox(ScreenSize, PhysicsMaterial(100.0f, 1.0f, 1.0f), 0.1f);     //三参数代表矩形边界的大小、材质(密度、恢复系数、摩擦力)、边框宽度
+	auto edgeNode = Node::create();
+	edgeNode->setPosition(Point(ScreenSize.width / 2, ScreenSize.height / 2));
+	edgeNode->setPhysicsBody(edgeBody);
+	this->addChild(edgeNode, 0);
+
 	/*添加背景*/
 	auto* backGround = Sprite::create("bg.jpg");
 	backGround->setPosition(ScreenSize.width / 2, ScreenSize.height / 2);
 	backGround->setScale(ScreenSize.width / backGround->getContentSize().width, ScreenSize.height / backGround->getContentSize().height);
-	addChild(backGround,0);                   //参数0表示drawing优先级
+	this->addChild(backGround);                   //参数0表示drawing优先级
 
 	/*添加地板*/
-	myFloor= Sprite::create("hardBrick.png");
+	myFloor = Sprite::create("brick.png");
 	myFloor->setPosition(ScreenSize.width / 2, 0);
 	myFloor->setScale(ScreenSize.width / myFloor->getContentSize().width, 0.1f);
 	auto floorBody = PhysicsBody::createBox(myFloor->getContentSize(), PhysicsMaterial(1000.0f, 1.0f, 0.0f));
@@ -75,9 +89,9 @@ void MyWorld::addSprite()
 	floorBody->setRotationEnable(false);   //不旋转
 	floorBody->setTag(Tag::FLOOR);         //判断节点
 	floorBody->setDynamic(false);
-
+	
 	myFloor->setPhysicsBody(floorBody);
-	this->addChild(myFloor,1);
+	this->addChild(myFloor);
 
 	/*添加底板*/
 	board = Sprite::create("board.png");
@@ -89,22 +103,41 @@ void MyWorld::addSprite()
 	boardBody->setTag(Tag::BOARD);         //判断节点
 	boardBody->setDynamic(false);
 	board->setPhysicsBody(boardBody);
-	this->addChild(board, 2);              //创建底板并加入到场景中
+	this->addChild(board);              //创建底板并加入到场景中
+
+	/*添加小球*/
+	ball = Sprite::create("ball.png");
+	ball->setScale(0.1f);
+	ball->setPosition(ScreenSize.width / 2, board->getContentSize().height * 0.08f + ball->getContentSize().width / 20 + myFloor->getContentSize().height / 10);
+	ballBody = PhysicsBody::createCircle(ball->getContentSize().width / 2, PhysicsMaterial(0.1f, 1.0f, 0.0f));
+	ballBody->setContactTestBitmask(0xFFFFFFFF);
+	ballBody->setGravityEnable(false);
+	ballBody->setRotationEnable(false);   //不旋转
+	ballBody->setTag(Tag::BALL);          //判别节点
+	ballBody->setDynamic(true);
+	ballBody->setVelocity(Vec2(originalVelocity-15.0f+getTotalScore(-1,0)*2, originalVelocity+getTotalScore(-1,0)*2));//设置初始速度
+
+	ball->setPhysicsBody(ballBody);
+	this->addChild(ball);             //创建小球并加入到场景中
 
 }
 
+/*添加实时变化的得分栏*/
 void MyWorld::addScoreLine()
 {
 	auto scoreLabel = Label::createWithTTF("Total score: ","fonts/Marker Felt.ttf",15);
 	scoreText = TextAtlas::create(std::to_string(totalScore), "score.png", 19, 19, "0");
 
-	scoreLabel->setPosition(ScreenSize.width * 0.15f, ScreenSize.height * 0.2f);
-	scoreText->setPosition(Vec2(ScreenSize.width * 0.35f, ScreenSize.height * 0.2f));
-	//scoreLabel->enableShadow(Color4B::GREEN, Size(5, 5));
+	scoreLabel->setPosition(ScreenSize.width * 0.1f, ScreenSize.height * 0.2f);
+	scoreText->setPosition(Vec2(ScreenSize.width * 0.2f, ScreenSize.height * 0.2f));
+
 	this->addChild(scoreLabel);
 	this->addChild(scoreText);
+
+	scoreText->setString(std::to_string(getTotalScore(-1,0)));
 }
 
+/*设定砖块类型*/
 Sprite* MyWorld::setBrickType(int brickType)
 {
 	if (Tag::SCORE_PROP == brickType)
@@ -114,10 +147,6 @@ Sprite* MyWorld::setBrickType(int brickType)
 	else if (Tag::BOARD_PROP == brickType)
 	{
 		brick = Sprite::create("boardProp.png");
-	}
-	else if(Tag::HARD_BRICK==brickType)
-	{
-		brick = Sprite::create("hardBrick.png");
 	}
 	else
 	{
@@ -138,7 +167,7 @@ void MyWorld::makeSingleBrick(float& PositionX,float& PositionY,int brickType)
 	auto brickBody = PhysicsBody::createBox(brick->getContentSize(), PhysicsMaterial(1000.0f, 1.0f, 0.0f));
 	brickBody->setContactTestBitmask(0xFFFFFFFF);
 	brickBody->setRotationEnable(false);   //不旋转
-	brickBody->setTag(brickType);         //判断节点
+	brickBody->setTag(brickType);          //判断节点
 	brickBody->setDynamic(false);
 
 	brick->setPhysicsBody(brickBody);
@@ -146,16 +175,18 @@ void MyWorld::makeSingleBrick(float& PositionX,float& PositionY,int brickType)
 
 }
 
+/*生成不同关卡的砖块*/
 void MyWorld::makeBricks()
 {
 	float positionX = 0;
 	float positionY = 0;
 	if (1 == gameLevel)
 	{
-		for (unsigned int i = 1; i <= 3; i++)
+		for (unsigned int i = 1; i <= 2; i++)
 		{
-			positionX = 15;
-			while (positionX < ScreenSize.width)
+			MyWorld::setBrickType(Tag::BRICK);
+			positionX = ScreenSize.width/2-brick->getContentSize().width/5*3;
+			for(unsigned int j=1;j<=7;j++)
 			{
 				MyWorld::setBrickType(Tag::BRICK);
 				positionY = ScreenSize.height - brick->getContentSize().height / 5 * i;
@@ -163,6 +194,14 @@ void MyWorld::makeBricks()
 				positionX = positionX + brick->getContentSize().width / 5;
 			}
 		}
+		MyWorld::setBrickType(Tag::BOARD_PROP);
+		positionX = ScreenSize.width / 2 + brick->getContentSize().width / 5 * 3;
+		positionY = ScreenSize.height - brick->getContentSize().height / 5 * 3;
+		MyWorld::makeSingleBrick(positionX, positionY, Tag::BOARD_PROP);
+
+		MyWorld::setBrickType(Tag::SCORE_PROP);
+		positionX = ScreenSize.width / 2 - brick->getContentSize().width / 5 * 3;
+		MyWorld::makeSingleBrick(positionX, positionY, Tag::SCORE_PROP);
 	}
 	else if (2 == gameLevel)
 	{
@@ -178,16 +217,15 @@ void MyWorld::makeBricks()
 				positionX = positionX + brick->getContentSize().width / 5;
 			}
 		}
-		/*创建硬质砖块*/
-		MyWorld::setBrickType(Tag::HARD_BRICK);
+		MyWorld::setBrickType(Tag::BRICK);
 		positionX = ScreenSize.width / 2 - brick->getContentSize().width / 5*3;
 		positionY = ScreenSize.height - brick->getContentSize().height / 5 * 4;
-		MyWorld::makeSingleBrick(positionX, positionY, Tag::HARD_BRICK);
+		MyWorld::makeSingleBrick(positionX, positionY, Tag::BRICK);
 
-		MyWorld::setBrickType(Tag::HARD_BRICK);
+		MyWorld::setBrickType(Tag::BRICK);
 		positionX = ScreenSize.width / 2 + brick->getContentSize().width / 5 * 3;
 		positionY = ScreenSize.height - brick->getContentSize().height / 5 * 4;
-		MyWorld::makeSingleBrick(positionX, positionY, Tag::HARD_BRICK);
+		MyWorld::makeSingleBrick(positionX, positionY, Tag::BRICK);
 
 		/*创建道具*/
 		MyWorld::setBrickType(Tag::BOARD_PROP);
@@ -213,6 +251,7 @@ void MyWorld::makeBricks()
 	}
 }
 
+/*添加监听器*/
 void MyWorld::addListener()
 {
 	auto keyboardListener = EventListenerKeyboard::create();
@@ -226,25 +265,7 @@ void MyWorld::addListener()
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(contactListener, this);
 }
 
-void MyWorld::test()
-{	
-	/*添加小球*/
-	ball = Sprite::create("ball.png");
-	ball->setScale(0.1f);
-	ball->setPosition(ScreenSize.width/2,board->getContentSize().height/10+ ball->getContentSize().width / 20+myFloor->getContentSize().height/5);
-	ballBody = PhysicsBody::createCircle(ball->getContentSize().width / 2, PhysicsMaterial(0.1f, 1.0f, 0.0f));
-	ballBody->setContactTestBitmask(0xFFFFFFFF);
-	ballBody->setGravityEnable(false);
-	ballBody->setRotationEnable(false);   //不旋转
-	ballBody->setTag(Tag::BALL);          //判别节点
-	ballBody->setDynamic(true);
-    ballBody->setVelocity(Vec2(originalVelocity, originalVelocity));//设置初始速度
-
-	ball->setPhysicsBody(ballBody);
-	this->addChild(ball, 3);               //创建小球并加入到场景中
-
-}
-
+/*按下一个键，执行对应操作*/
 void MyWorld::KeyPressed(EventKeyboard::KeyCode keycode, Event* event)
 {
 	switch (keycode)
@@ -273,6 +294,7 @@ void MyWorld::KeyPressed(EventKeyboard::KeyCode keycode, Event* event)
 	}
 }
 
+/*松开按键，执行对应操作*/
 void MyWorld::KeyReleased(EventKeyboard::KeyCode keycode, Event* event)
 {
 	switch (keycode)
@@ -296,33 +318,29 @@ bool MyWorld::onContactBegin(PhysicsContact& contact)
 
 	if (bodyA->getTag() == Tag::BALL && bodyB->getTag() == Tag::FLOOR)        //判断游戏结束
 	{
+		//HelloWorld::write(totalScore);
+		getChapter(false);
 		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
 	else if (bodyA->getTag() == Tag::FLOOR && bodyB->getTag() == Tag::BALL)
 	{
+		//HelloWorld::write(totalScore);
+		getChapter(false);
 		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
-
-	if (bodyA->getTag() == Tag::HARD_BRICK && bodyB->getTag() == Tag::BALL)
-	{
-		bodyA->setTag(Tag::BRICK);
-	}
-	else if (bodyA->getTag() == Tag::BALL && bodyB->getTag() == Tag::HARD_BRICK)
-	{
-		bodyB->setTag(Tag::BRICK);
-	}
-	if (bodyA->getTag() == Tag::BALL && bodyB->getTag() == Tag::BRICK)        //砖块碰撞
+	else if (bodyA->getTag() == Tag::BALL && bodyB->getTag() == Tag::BRICK)        //砖块碰撞
 	{
 		nodeB->removeFromParentAndCleanup(true);
 		amountOfBrick--;
-		totalScore=getTotalScore(scoreTag);
+		totalScore=getTotalScore(scoreTag,0);
 		scoreText->setString(std::to_string(totalScore));
+
 	}
 	else if (bodyA->getTag() == Tag::BRICK && bodyB->getTag() == Tag::BALL)
 	{
 		nodeA->removeFromParentAndCleanup(true);
 		amountOfBrick--;
-		totalScore=getTotalScore(scoreTag);
+		totalScore=getTotalScore(scoreTag,0);
 		scoreText->setString(std::to_string(totalScore));
 	}
 	else if (bodyA->getTag() == Tag::SCORE_PROP && bodyB->getTag() == Tag::BALL)//得分道具
@@ -348,12 +366,15 @@ bool MyWorld::onContactBegin(PhysicsContact& contact)
 		board->setScale(boardLength, 0.1f);
 	}
 
-	if (0 == amountOfBrick && 1 == gameLevel)
+	if (0 == amountOfBrick && 1 == gameLevel)				//通过第一关
 	{
-		//Director::getInstance()->replaceScene(TransitionFade::create(1.0f, Next::createScene()));
+		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, Next::createScene()));
 	}
-	else if (0 == amountOfBrick && 2 == gameLevel)
+	else if (0 == amountOfBrick && 2 == gameLevel)          //通过第二关
 	{
+		//HelloWorld::write(totalScore);
+		getTotalScore(scoreTag, 1);
+		getChapter(false);
 	    Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
 
@@ -371,13 +392,12 @@ void MyWorld::update(float dt)
 		board->setPosition(ScreenSize.width - board->getContentSize().width * boardLength / 2, board->getPosition().y);
 	}
 
-	/*更新得分*/
 	/*更新小球速度*/
 	float Vx = ballBody->getVelocity().x;
 	float Vy = ballBody->getVelocity().y;
 	float angle = atan(fabs(Vy / Vx));
 	float V = float(sqrt(2 * originalVelocity * originalVelocity) + totalScore* 2);
-	ballBody->setVelocity(Vec2(Vx>0?V*cos(angle):-V*cos(angle), Vy > 0 ? V * sin(angle) : -V * sin(angle)));
+	ballBody->setVelocity(Vec2(Vx > 0 ? V * cos(angle) : -V * cos(angle), Vy > 0 ? V * sin(angle) : -V * sin(angle)));
 }
 
 /*更新关卡数据*/
@@ -387,19 +407,14 @@ void MyWorld::updateChapter()
 	switch (gameLevel)
 	{
 	case 1:
-		amountOfBrick = 48;
-		boardLength = 0.08f;
+		amountOfBrick = 14;
+		boardLength = 0.1f;
 		originalVelocity = 100.0f;
 		break;
 	case 2:
 		amountOfBrick = 20;
-		boardLength = 0.05f;
-		originalVelocity = 120.0f;
-		break;
-	case 3:
-		amountOfBrick = 30;
-		boardLength = 0.1f;
-		originalVelocity = 150.0f;
+		boardLength = 0.08f;
+		originalVelocity = 105.0f;
 		break;
 	default: break;
 	}
