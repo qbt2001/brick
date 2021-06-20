@@ -21,12 +21,14 @@ public:
 	void KeyPressed(EventKeyboard::KeyCode keycode, Event* event);
 	void KeyReleased(EventKeyboard::KeyCode keycode, Event* event);
 	void addListener();        //添加监听器
-	bool onContactBegin(PhysicsContact& contact);  //碰撞检测
+	bool onContactBegin(PhysicsContact& contact);  //碰撞检测,重载系统函数
 	void updateChapter();      //更新关卡
 	void addScoreLine();       //得分栏
-	void makeBricks();        //生成砖块 
+	void makeBricks();         //生成砖块 
 	void makeSingleBrick(float& PositionX, float& PositionY, int brickType);    //生产单个砖块
 	Sprite* setBrickType(int brickType);             //创建不同类型的砖块精灵
+	void write(int insert_number);  //写入得分榜
+
 	CREATE_FUNC(MyWorld);      //使用了一个宏
 	~MyWorld() {};
 

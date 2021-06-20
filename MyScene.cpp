@@ -62,7 +62,6 @@ bool MyWorld::init()
 	return true;
 }
 
-/*Member Initialization List*/
 
 /*添加背景、地板、移动板及小球精灵*/
 void MyWorld::addSprite()
@@ -122,7 +121,9 @@ void MyWorld::addSprite()
 
 }
 
-/*添加实时变化的得分栏*/
+/*添加实时变化的得分栏
+借鉴代码出处：https://blog.csdn.net/Tang_AHMET/article/details/105145519
+*/
 void MyWorld::addScoreLine()
 {
 	auto scoreLabel = Label::createWithTTF("Total score: ","fonts/Marker Felt.ttf",15);
@@ -251,7 +252,8 @@ void MyWorld::makeBricks()
 	}
 }
 
-/*添加监听器*/
+/*添加监听器
+借鉴代码出处：https://blog.csdn.net/yaoxh6/article/details/80765819?utm_source=app&app_version=4.8.0&code=app_1562916241&uLinkId=usr1mkqgl919blen*/
 void MyWorld::addListener()
 {
 	auto keyboardListener = EventListenerKeyboard::create();
@@ -318,13 +320,13 @@ bool MyWorld::onContactBegin(PhysicsContact& contact)
 
 	if (bodyA->getTag() == Tag::BALL && bodyB->getTag() == Tag::FLOOR)        //判断游戏结束
 	{
-		//HelloWorld::write(totalScore);
+		MyWorld::write(totalScore);
 		getChapter(false);
 		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
 	else if (bodyA->getTag() == Tag::FLOOR && bodyB->getTag() == Tag::BALL)
 	{
-		//HelloWorld::write(totalScore);
+		MyWorld::write(totalScore);
 		getChapter(false);
 		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
@@ -372,7 +374,7 @@ bool MyWorld::onContactBegin(PhysicsContact& contact)
 	}
 	else if (0 == amountOfBrick && 2 == gameLevel)          //通过第二关
 	{
-		//HelloWorld::write(totalScore);
+		MyWorld::write(totalScore);
 		getTotalScore(scoreTag, 1);
 		getChapter(false);
 	    Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
@@ -420,6 +422,18 @@ void MyWorld::updateChapter()
 	}
 }
 
-
-
-
+void MyWorld::write(int insert_number)
+{
+	int rank1 = UserDefault::getInstance()->getIntegerForKey("rank1");
+	int rank2 = UserDefault::getInstance()->getIntegerForKey("rank2");
+	int rank3 = UserDefault::getInstance()->getIntegerForKey("rank3");
+	if (insert_number > rank1)
+		rank3 = rank2, rank2 = rank1, rank1 = insert_number;
+	else if (insert_number > rank2)
+		rank3 = rank2, rank2 = insert_number;
+	else if (insert_number > rank3)
+		rank3 = insert_number;
+	UserDefault::getInstance()->setIntegerForKey("rank1", rank1);
+	UserDefault::getInstance()->setIntegerForKey("rank2", rank2);
+	UserDefault::getInstance()->setIntegerForKey("rank3", rank3);
+}
