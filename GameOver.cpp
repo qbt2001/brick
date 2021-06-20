@@ -43,25 +43,11 @@ bool GameOver::init() {
     button2->setScale(size.width / button2->getContentSize().width / 20, size.height / button2->getContentSize().height / 20);
     button2->setPosition(Vec2(3, -50));
     this->addChild(button2, 2);
-    /*auto pbutton1 = MenuItemImage::create(
-        "button.png",
-        "button.png",
-        CC_CALLBACK_1(Gameover::CallBack, this));
-    Size size = Director::getInstance()->getVisibleSize();
-    auto label1 = Label::createWithSystemFont("Start", "Arial", 280);
-    auto plabel1 = MenuItemLabel::create(
-        label1,
-        CC_CALLBACK_1(Gameover::CallBack, this));
-    auto button1 = Menu::create(pbutton1, plabel1, NULL);
-    button1->setScale(size.width / button1->getContentSize().width / 20, size.height / button1->getContentSize().height / 20);
-    button1->setPosition(Vec2(3, 50));
-    this->addChild(button1, 2);*/
     return true;
 }
 
 void GameOver::CallBack(Ref* pSender) {
-    Director::getInstance()->popScene();
-    Director::getInstance()->pushScene(TransitionFade::create(1.0f, HelloWorld::createScene()));
+    Director::getInstance()->replaceScene(TransitionFade::create(1.0f, HelloWorld::createScene()));
 }
 
 void GameOver::Exit(Ref* pSender) {
