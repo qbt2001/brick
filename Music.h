@@ -3,11 +3,11 @@
 #include "cocos2d.h"
 using namespace cocos2d;
 
-class ControlBackgroundMusic{
+class BackgroundMusicController{
 	public:
     void PlayBackgroundMusic();
     void PauseBackgroundMusic();
     void PlayEffect();
-}
+}ControlBackgroundMusic;
 #endif
 #pragma once
