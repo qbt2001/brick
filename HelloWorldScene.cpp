@@ -28,6 +28,7 @@
 #include "../win32-build/MyScene.h"
 #include "../win32-build/Next.h"
 #include "../win32-build/OnlineScene.h"
+#include "../win32-build/Music.h"
 USING_NS_CC;
 
 Scene* HelloWorld::createScene()
@@ -50,6 +51,7 @@ bool HelloWorld::init()
 
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
+    PlayBackgroundMusic();
 
     auto pbutton1 = MenuItemImage::create(
         "button.png",
@@ -134,6 +136,7 @@ void HelloWorld::read(Ref* pSender)
 
 void HelloWorld::menuClose(Ref* pSender)
 {
+    PauseBackgroundMusic();
     Director::getInstance()->end();
 }
 
