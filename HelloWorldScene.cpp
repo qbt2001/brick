@@ -51,7 +51,7 @@ bool HelloWorld::init()
 
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
-    PlayBackgroundMusic();
+    ControlBackgroundMusic->PlayBackgroundMusic();
 
     auto pbutton1 = MenuItemImage::create(
         "button.png",
@@ -136,7 +136,7 @@ void HelloWorld::read(Ref* pSender)
 
 void HelloWorld::menuClose(Ref* pSender)
 {
-    PauseBackgroundMusic();
+    ControlBackgroundMusic->PauseBackgroundMusic();
     Director::getInstance()->end();
 }
 
