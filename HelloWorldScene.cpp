@@ -136,7 +136,7 @@ void HelloWorld::read(Ref* pSender)
 
 void HelloWorld::menuClose(Ref* pSender)
 {
-    PauseBackground();
+    PauseBackgroundMusic();
     Director::getInstance()->end();
 }
 
