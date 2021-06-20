@@ -39,9 +39,12 @@ public:
     void menuClose(cocos2d::Ref* pSender);
     void gameover(cocos2d::Ref* pSender);
     void TurnToMyScene(cocos2d::Ref* pSender);
+    void TurnToOnlineScene(cocos2d::Ref* pSender);
+    void TurnToNext(cocos2d::Ref* pSender);
     void read(cocos2d::Ref* pSender);
     void write(int insert_number);
-    
+    void capture(Ref* sender); 
+    void afterCapture(bool succeed, const std::string& outputFile);
     // implement the "static create()" method manually
     CREATE_FUNC(HelloWorld);
 };
