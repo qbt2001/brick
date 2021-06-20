@@ -9,5 +9,5 @@ class ControlBackgroundMusic{
     void PauseBackgroundMusic();
     void PlayEffect();
 }
-
+#endif
 #pragma once
