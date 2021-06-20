@@ -321,12 +321,14 @@ bool MyWorld::onContactBegin(PhysicsContact& contact)
 	if (bodyA->getTag() == Tag::BALL && bodyB->getTag() == Tag::FLOOR)        //ÅÐ¶ÏÓÎÏ·½áÊø
 	{
 		MyWorld::write(totalScore);
+		getTotalScore(scoreTag, 1);
 		getChapter(false);
 		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
 	else if (bodyA->getTag() == Tag::FLOOR && bodyB->getTag() == Tag::BALL)
 	{
 		MyWorld::write(totalScore);
+		getTotalScore(scoreTag, 1);
 		getChapter(false);
 		Director::getInstance()->replaceScene(TransitionFade::create(1.0f, GameOver::createScene()));
 	}
